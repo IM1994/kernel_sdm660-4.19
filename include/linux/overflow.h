@@ -248,7 +248,7 @@ static inline bool __must_check __must_check_overflow(bool overflow)
 	*_d = (_a_full << _to_shift);					\
 	(_to_shift != _s || is_negative(*_d) || is_negative(_a) ||	\
 	(*_d >> _to_shift) != _a);					\
-}))
+})
 
 /**
  * size_mul() - Calculate size_t multiplication with saturation at SIZE_MAX
@@ -354,9 +354,8 @@ static inline size_t __must_check size_sub(size_t minuend, size_t subtrahend)
  * Return: number of bytes needed or SIZE_MAX on overflow.
  */
 #define flex_array_size(p, member, count)				\
-	__builtin_choose_expr(__is_constexpr(count),			\
-		(count) * sizeof(*(p)->member) + __must_be_array((p)->member),	\
-		size_mul(count, sizeof(*(p)->member) + __must_be_array((p)->member)))
+	size_mul(count,							\
+		 sizeof(*(p)->member) + __must_be_array((p)->member))
 
 /**
  * struct_size() - Calculate size of structure with trailing flexible array.
@@ -371,25 +370,6 @@ static inline size_t __must_check size_sub(size_t minuend, size_t subtrahend)
  * Return: number of bytes needed or SIZE_MAX on overflow.
  */
 #define struct_size(p, member, count)					\
-	__ab_c_size(count,						\
-		    sizeof(*(p)->member) + __must_be_array((p)->member),\
-		    sizeof(*(p)))
-
-/**
- * flex_array_size() - Calculate size of a flexible array member
- *                     within an enclosing structure.
- *
- * @p: Pointer to the structure.
- * @member: Name of the flexible array member.
- * @count: Number of elements in the array.
- *
- * Calculates size of a flexible array of @count number of @member
- * elements, at the end of structure @p.
- *
- * Return: number of bytes needed or SIZE_MAX on overflow.
- */
-#define flex_array_size(p, member, count)				\
-	array_size(count,						\
-		    sizeof(*(p)->member) + __must_be_array((p)->member))
+	size_add(sizeof(*(p)), flex_array_size(p, member, count))
 
 #endif /* __LINUX_OVERFLOW_H */
